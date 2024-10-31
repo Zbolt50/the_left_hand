@@ -15,6 +15,7 @@ enum combos {
 };
 
 const uint16_t PROGMEM game_combo[] = {KC_F2, KC_F3, KC_F4, COMBO_END};
+
 combo_t key_combos[] = {
     COMBO(game_combo, TO(2))
 };
@@ -106,32 +107,59 @@ static void render_img(void) {
 }
 // Rotate OLED
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
+    if (!is_keyboard_master()) {
+        return OLED_ROTATION_270;  // flips the display 180 degrees if offhand
+    }
     return OLED_ROTATION_90;  
 }
+#endif
 
 // Draw to OLED
 bool oled_task_user() {
-    if (!is_keyboard_master()) {
-      render_img();
-    } else {
-      oled_set_cursor(0,1);
-      render_img();
-      oled_set_cursor(0,7);
-      switch (get_highest_layer(layer_state))
-      {
-      case 0 :
-      oled_write("BASE", false);
-        break;
-      case 1 :
-      oled_write("FUNC", false);
-        break;
-      case 2 :
-      oled_write("GAME", false);
-        break;
-      }
+    if (!is_keyboard_master()) 
+    {   
+        oled_set_cursor(0,6);
+        render_img();
+    } 
+    else 
+    {
+        oled_set_cursor(0,1);
+        render_img();
+        oled_set_cursor(0,7);
+        switch (get_highest_layer(layer_state))
+        {
+            case 0 :
+                oled_write("BASE", false);
+                break;
+            case 1 :
+                oled_write("FUNC", false);
+                break;
+            case 2 :
+                oled_write("GAME", false);
+                break;
+        }
+        oled_set_cursor(0,9);
+        os_variant_t host = detected_host_os();
+            switch (host) 
+            {
+            case OS_MACOS:
+            case OS_IOS:
+                oled_write("IOS", false);
+                break;
+            case OS_WINDOWS:
+                oled_write("WIN", false);
+                break;
+            case OS_LINUX:
+                oled_write("LINUX", false);
+                break;
+            case OS_UNSURE:
+                oled_write("OS?", false);
+                break;
+            }
+        
         //oled_scroll_left();  // Turns on scrolling
     }
     return false;
 }
 
-#endif
+
