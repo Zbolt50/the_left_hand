@@ -14,4 +14,7 @@ POINTING_DEVICE_DRIVER = analog_joystick
 
 OLED_ENABLE = yes
 
+WPM_ENABLE = yes
 OS_DETECTION_ENABLE = yes
+
+CONSOLE_ENABLE = yes

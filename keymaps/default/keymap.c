@@ -2,22 +2,19 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // CONSUME <> ENHANCE <> REPLICATE
 
-//Save for Joystick Button
-//{"matrix": [3, 0], "x": 0, "y": 3},
-
 #include QMK_KEYBOARD_H
 #include <keyboard.h> 
-//TODO: Add OS detection so COPY/PASTE WORKS ON WINDOWS
-
 
 enum combos {
     GAME
 };
 
 const uint16_t PROGMEM game_combo[] = {KC_F2, KC_F3, KC_F4, COMBO_END};
-
+const uint16_t PROGMEM exit_game_combo[] = {KC_1, KC_2, KC_3, COMBO_END};
 combo_t key_combos[] = {
-    COMBO(game_combo, TO(2))
+    COMBO(game_combo, TO(2)),
+    COMBO(exit_game_combo, TO(0))
+
 };
 
 
@@ -48,7 +45,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______, KC_A,  KC_S,   KC_D,   KC_F,   KC_G,        _______,  KC_H,     KC_J,    KC_K,     KC_L,    KC_SCLN,               KC_QUOTE,
         _______, KC_Z,  KC_X,   KC_C,   KC_V,   KC_B,        _______,  KC_N,     KC_M,    KC_COMMA, KC_DOT,  KC_SLSH,               KC_RCTL,
 
-        _______, _______, _______,     KC_LSFT, KC_ENTER,    KC_ENTER, KC_RSFT, KC_SPACE, KC_UP, KC_DOWN,                         
+        _______, _______, _______,     KC_LSFT, KC_ENTER,    KC_ENTER, KC_RSFT, KC_SPACE, MS_BTN1, MS_BTN2,                        
                                        KC_BSPC, _______,     _______, KC_BSPC                       
     ),
     //Layer For Games
@@ -58,11 +55,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_LALT, KC_LSFT, KC_A,   KC_S,   KC_D,   KC_F,        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
         KC_HOME, KC_LCTL, KC_Z,   KC_X,   KC_C,   KC_B,        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
 
-        KC_LBRC, KC_RBRC, KC_SPACE,    KC_H, KC_Z,             XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                         
+        KC_LBRC, KC_RBRC, KC_SPACE,    KC_H, KC_G,             XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                         
                                        KC_V, KC_B,             XXXXXXX, XXXXXXX     
     )
     
-
 };
 
 #ifdef OLED_ENABLE
@@ -142,14 +138,13 @@ oled_rotation_t oled_init_user(oled_rotation_t rotation) {
     return OLED_ROTATION_90;  
 }
 #endif
-static void print_status(void) {
+static void print_status_left(void) {
         oled_set_cursor(0,1);
         oled_write_raw_P(siva_logo,sizeof(siva_logo));
         oled_set_cursor(0,7);
         oled_write("LAYER", false);
         switch (get_highest_layer(layer_state))
         {
-            
             case 0 :
                 oled_write("BASE", false);
                 break;
@@ -183,18 +178,36 @@ static void print_status(void) {
         //oled_scroll_left();  // Turns on scrolling
     
 }
+static void print_status_right(void){
+    // WPM Counter
+    uint8_t n = get_current_wpm();
+    char    wpm_str[4];
+    oled_set_cursor(0,9);
+    wpm_str[3] = '\0';
+    wpm_str[2] = '0' + n % 10;
+    wpm_str[1] = '0' + (n /= 10) % 10;
+    wpm_str[0] = '0' + n / 10;
+    oled_write("WPM:", false);
+    oled_set_cursor(0,10);
+    oled_write(wpm_str, false);
+}
+
 // Draw to OLED
 bool oled_task_user() {
     if (!is_keyboard_master()) 
     {   
-        oled_set_cursor(0,6);
-        oled_write_raw_P(siva_logo,sizeof(siva_logo));
+        print_status_right(); 
     }
     else 
     {
-        print_status();
+        print_status_left();
     } 
     return false;
 }
-
-
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  // If console is enabled, it will print the matrix position and status of each key pressed
+#ifdef CONSOLE_ENABLE
+    uprintf("KL: kc: 0x%04X, col: %2u, row: %2u, pressed: %u, time: %5u, int: %u, count: %u\n", keycode, record->event.key.col, record->event.key.row, record->event.pressed, record->event.time, record->tap.interrupted, record->tap.count);
+#endif 
+  return true;
+}

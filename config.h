@@ -12,6 +12,7 @@
 #define SPLIT_OLED_ENABLE
 #define SPLIT_LED_STATE_ENABLE
 #define SPLIT_POINTING_ENABLE
+#define SPLIT_WPM_ENABLE
 #define OLED_TIMEOUT 60000
 
 // Bootmagic 
@@ -39,7 +40,7 @@
 #define JOYSTICK_BUTTON_COUNT 1
 #define JOYSTICK_AXES_COUNT 2
 */
-
+#define EE_HANDS
 // OLEDS
 #define I2C_DRIVER I2CD1
 #define I2C1_SCL_PIN GP27
